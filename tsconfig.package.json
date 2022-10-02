@@ -1,0 +1,19 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "declaration": true,
+        "removeComments": false,
+        "outDir": "./package/dist",
+        "declarationDir": "./package/dist",
+    },
+    "include": [
+        "./package/**/*"
+    ],
+    "exclude": [
+        "./node_modules/**/*",
+        "./package/**/tests/**/*",
+        "./sandbox/**/*",
+        "*.config.*s",
+        "*.package.*s"
+    ]
+}
