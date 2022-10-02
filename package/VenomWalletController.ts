@@ -117,11 +117,12 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
         // If connected, then update states
         if (walletAccount) {
-            this.setData({ walletAccount });
-
             if (this.venomConnect.currentProvider) rpcClient = this.venomConnect.currentProvider;
-            this.updateWalletContract?.();
             this.createWalletSubscription?.();
+
+            await this.updateWalletContract();
+
+            this.setData({ walletAccount });
         }
 
         this.setState({ connected: !!walletAccount, loading: false });
@@ -229,14 +230,14 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         // Create a new subscription to permissions change.
         this.#walletPermissionsSubscription = await this.rpcClient.subscribe("permissionsChanged");
 
-        this.#walletPermissionsSubscription.on("data", data => {
+        this.#walletPermissionsSubscription.on("data", async data => {
             if (!data.permissions.accountInteraction) return;
+
+            this.createWalletSubscription();
+            await this.updateWalletContract();
 
             this.setState({ connected: true });
             this.setData({ walletAccount: data.permissions.accountInteraction });
-
-            this.updateWalletContract();
-            this.createWalletSubscription();
 
             if (this.venomConnect && this.venomConnect.currentProvider) rpcClient = this.venomConnect.currentProvider;
             this.#walletPermissionsSubscription?.unsubscribe?.();
