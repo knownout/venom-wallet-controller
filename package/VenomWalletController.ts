@@ -121,9 +121,9 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         if (walletAccount) {
             this.createWalletSubscription?.();
 
-            await this.updateWalletContract();
-
             this.setData({ walletAccount, walletProvider: this.venomConnect.currentProvider });
+
+            await this.updateWalletContract();
         }
 
         this.setState({ connected: !!walletAccount, loading: false });
@@ -234,14 +234,15 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         this.#walletPermissionsSubscription.on("data", async data => {
             if (!data.permissions.accountInteraction) return;
 
-            this.createWalletSubscription();
-            await this.updateWalletContract();
-
-            this.setState({ connected: true });
             this.setData({
                 walletAccount: data.permissions.accountInteraction,
                 walletProvider: this.venomConnect?.currentProvider
             });
+
+            this.createWalletSubscription();
+            await this.updateWalletContract();
+
+            this.setState({ connected: true });
 
             this.#walletPermissionsSubscription?.unsubscribe?.();
             this.#walletPermissionsSubscription = undefined;
