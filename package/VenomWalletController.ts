@@ -133,6 +133,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     public callWalletAction () {
+        if (this.state.loading) return;
+
         // If wallet is connected, then disable it ...
         if (this.state.connected) this.disconnectWallet?.();
 
