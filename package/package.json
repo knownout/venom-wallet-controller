@@ -1,7 +1,7 @@
 {
     "name": "@knownout/venom-wallet-controller",
-    "version": "0.1.6",
-    "author": "Alexandr <re-knownout> knownout@hotmail.com",
+    "version": "0.1.7",
+    "author": "Alexandr Slavinskii",
     "license": "MIT",
     "description": "Venom wallet controller",
     "main": "dist/VenomWalletController.js",
@@ -17,16 +17,17 @@
     ],
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/re-knownout/venom-wallet-controller.git",
+        "url": "git+https://github.com/knownout/venom-wallet-controller.git",
         "directory": "src/package"
     },
     "publishConfig": {
-        "access": "public"
+        "access": "public",
+        "registry":"https://npm.pkg.github.com"
     },
     "bugs": {
-        "url": "https://github.com/re-knownout/venom-wallet-controller/issues"
+        "url": "https://github.com/knownout/venom-wallet-controller/issues"
     },
-    "homepage": "https://github.com/re-knownout/venom-wallet-controller#readme",
+    "homepage": "https://github.com/knownout/venom-wallet-controller#readme",
     "dependencies": {
         "mobx": "^6.6.2",
         "everscale-inpage-provider": "^0.3.42",

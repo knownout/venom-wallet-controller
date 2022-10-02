@@ -9,13 +9,13 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/re-knownout/venom-wallet-controller.git",
+        "url": "git+https://github.com/knownout/venom-wallet-controller.git",
         "directory": "src/package"
     },
     "bugs": {
-        "url": "https://github.com/re-knownout/venom-wallet-controller/issues"
+        "url": "https://github.com/knownout/venom-wallet-controller/issues"
     },
-    "homepage": "https://github.com/re-knownout/venom-wallet-controller#readme",
+    "homepage": "https://github.com/knownout/venom-wallet-controller#readme",
     "devDependencies": {
         "@babel/core": "^7.18.2",
         "@knownout/base-controller": "^0.1.0",

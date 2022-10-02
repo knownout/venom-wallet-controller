@@ -2,5 +2,5 @@
 
 Documentation and use cases: https://github.com/re-knownout/venom-wallet-controller/tree/master/package
 
-re-knownout - https://github.com/re-knownout/
+knownout - https://github.com/knownout/
 <br>knownout@hotmail.com
