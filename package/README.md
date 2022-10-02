@@ -53,6 +53,5 @@ venomWallet.standaloneClient // Getter
 venomWallet.rpcClient // Getter
 ```
 
-https://venom.foundation
 <br>re-knownout - https://github.com/re-knownout/
 <br>knownout@hotmail.com
