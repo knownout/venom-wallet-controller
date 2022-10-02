@@ -15,8 +15,7 @@ export type TVenomWalletAccountData = {
 }
 
 /**
- * Provider instance, can only be overwritten
- * when connecting a new provider.
+ * Provider instance, should not be overwritten.
  * @type {ProviderRpcClient}
  */
 let rpcClient = new ProviderRpcClient({
@@ -50,6 +49,9 @@ interface IVenomWalletData {
 
     /** Saved wallet contract state. */
     walletContract?: FullContractState;
+
+    /** Connected wallet provider instance. */
+    walletProvider?: ProviderRpcClient;
 }
 
 /**
@@ -117,12 +119,11 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
         // If connected, then update states
         if (walletAccount) {
-            if (this.venomConnect.currentProvider) rpcClient = this.venomConnect.currentProvider;
             this.createWalletSubscription?.();
 
             await this.updateWalletContract();
 
-            this.setData({ walletAccount });
+            this.setData({ walletAccount, walletProvider: this.venomConnect.currentProvider });
         }
 
         this.setState({ connected: !!walletAccount, loading: false });
@@ -223,7 +224,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
         // Kill the current subscription (if it exists).
         if (this.#walletPermissionsSubscription) {
-            this.#walletPermissionsSubscription.unsubscribe?.();
+            await this.#walletPermissionsSubscription.unsubscribe();
             this.#walletPermissionsSubscription = undefined;
         }
 
@@ -237,9 +238,11 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             await this.updateWalletContract();
 
             this.setState({ connected: true });
-            this.setData({ walletAccount: data.permissions.accountInteraction });
+            this.setData({
+                walletAccount: data.permissions.accountInteraction,
+                walletProvider: this.venomConnect?.currentProvider
+            });
 
-            if (this.venomConnect && this.venomConnect.currentProvider) rpcClient = this.venomConnect.currentProvider;
             this.#walletPermissionsSubscription?.unsubscribe?.();
             this.#walletPermissionsSubscription = undefined;
         });
