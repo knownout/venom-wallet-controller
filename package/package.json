@@ -21,8 +21,7 @@
         "directory": "src/package"
     },
     "publishConfig": {
-        "access": "public",
-        "registry":"https://npm.pkg.github.com"
+        "access": "public"
     },
     "bugs": {
         "url": "https://github.com/knownout/venom-wallet-controller/issues"
