@@ -28,8 +28,7 @@ interface IVenomWalletState {
     connected: boolean;
 
     /**
-     * True only on controller initialization, not updated
-     * when changing wallet.
+     * True only on controller initialization or wallet change.
      */
     loading: boolean;
 
@@ -234,6 +233,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         this.#walletPermissionsSubscription.on("data", async data => {
             if (!data.permissions.accountInteraction) return;
 
+            this.setState("loading", true);
+
             this.setData({
                 walletAccount: data.permissions.accountInteraction,
                 walletProvider: this.venomConnect?.currentProvider
@@ -242,7 +243,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             this.createWalletSubscription();
             await this.updateWalletContract();
 
-            this.setState({ connected: true });
+            this.setState({ connected: true, loading: false });
 
             this.#walletPermissionsSubscription?.unsubscribe?.();
             this.#walletPermissionsSubscription = undefined;
