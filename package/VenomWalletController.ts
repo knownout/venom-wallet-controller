@@ -69,6 +69,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
     constructor () {
         super({ connected: false, loading: true }, {});
         makeObservable(this);
+
+        this.updateWalletContract = this.updateWalletContract.bind(this);
     }
 
     /**
