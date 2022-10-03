@@ -10,6 +10,7 @@ specifiers:
   everscale-inpage-provider: ^0.3.42
   everscale-standalone-client: ^2.1.1
   html-webpack-plugin: ^5.5.0
+  husky: ^8.0.1
   jest: ^28.1.0
   mini-css-extract-plugin: ^2.6.0
   mobx: ^6.6.2
@@ -37,6 +38,7 @@ devDependencies:
   everscale-inpage-provider: 0.3.42
   everscale-standalone-client: 2.1.1
   html-webpack-plugin: 5.5.0_webpack@5.72.1
+  husky: 8.0.1
   jest: 28.1.0
   mini-css-extract-plugin: 2.6.0_webpack@5.72.1
   mobx: 6.6.2
@@ -2482,6 +2484,12 @@ packages:
   /human-signals/2.1.0:
     resolution: {integrity: sha512-B4FFZ6q/T2jhhksgkbEW3HBvWIfDW85snkQgawt07S7J5QXTk6BkNV+0yAeZrM5QpMAdYlocGoljn0sJ/WQkFw==}
     engines: {node: '>=10.17.0'}
+    dev: true
+
+  /husky/8.0.1:
+    resolution: {integrity: sha512-xs7/chUH/CKdOCs7Zy0Aev9e/dKOMZf3K1Az1nar3tzlv0jfqnYtu235bstsWTmXOR0EfINrPa97yy4Lz6RiKw==}
+    engines: {node: '>=14'}
+    hasBin: true
     dev: true
 
   /iconv-lite/0.4.24:

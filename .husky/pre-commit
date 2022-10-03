@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+node .husky/update.js && git add package/package.json
+pnpm run build:package
+cd package
+npm publish
