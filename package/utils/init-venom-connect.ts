@@ -11,6 +11,12 @@ const initVenomConnect = async () => new VenomConnect({
                     {
                         browser: "chrome",
                         link: "https://chrome.google.com/webstore/detail/venom-wallet/ojggmchlghnjlapmfbnjholfjkiidbch"
+                    }, {
+                        browser: "chrome",
+                        link: "https://chrome.google.com/webstore/detail/ever-wallet/cgeeodpfagjceefieflmdfphplkenlfk"
+                    }, {
+                        browser: "firefox",
+                        link: "https://addons.mozilla.org/en-US/firefox/addon/ever-wallet"
                     }
                 ],
                 android: undefined,
@@ -40,6 +46,35 @@ const initVenomConnect = async () => new VenomConnect({
                         forceUseFallback: true
                     },
 
+                    id: "extension",
+                    type: "extension"
+                }
+            ],
+            defaultWalletWaysToConnect: [ "mobile", "ios", "android" ]
+        },
+
+        everwallet: {
+            walletWaysToConnect: [
+                {
+                    package: ProviderRpcClient,
+                    packageOptions: {
+                        fallback: VenomConnect.getPromise("everwallet", "extension")
+                            || (() => Promise.reject()),
+                        forceUseFallback: true
+                    },
+                    packageOptionsStandalone: {
+                        fallback: () => EverscaleStandaloneClient.create({
+                            connection: {
+                                id: 1000,
+                                group: "venom_mainnet",
+                                type: "jrpc",
+                                data: {
+                                    endpoint: "https://jrpc.venom.foundation/rpc"
+                                }
+                            }
+                        }),
+                        forceUseFallback: true
+                    },
                     id: "extension",
                     type: "extension"
                 }
