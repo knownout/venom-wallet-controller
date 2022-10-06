@@ -2,7 +2,7 @@ import BaseController from "@knownout/base-controller";
 import { waitingVenomPromise } from "./utils/waiting-venom-promise";
 import BigNumber from "bignumber.js";
 import {
-    Address, FullContractState, hasEverscaleProvider, ProviderRpcClient, Subscription
+    Address, FullContractState, ProviderRpcClient, Subscription
 } from "everscale-inpage-provider";
 import { action, computed, makeObservable, observable } from "mobx";
 import { VenomConnect } from "venom-connect";
@@ -18,7 +18,7 @@ export type TVenomWalletAccountData = {
  * Provider instance, should not be overwritten.
  * @type {ProviderRpcClient}
  */
-let rpcClient = new ProviderRpcClient({
+let globalRpcClient = new ProviderRpcClient({
     forceUseFallback: true,
     fallback: () => waitingVenomPromise()
 });
@@ -77,7 +77,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      * Method for getting inpage provider.
      * @return {ProviderRpcClient | null} inpage provider instance or null if not initialized.
      */
-    public get rpcClient () { return rpcClient; }
+    public get rpcClient () { return this.data.walletProvider ?? globalRpcClient; }
 
     /**
      * Method for getting standalone client
@@ -103,14 +103,18 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         // Waiting for connector
         this.venomConnect = await (initFunction ?? initVenomConnect)();
 
+        const walletProvider = await this.venomConnect.checkAuth();
+
         // Check if browser extension is installed
-        const walletInstalled = await hasEverscaleProvider();
+        const walletInstalled = Boolean(walletProvider);
 
         this.setData({ walletInstalled });
         if (!walletInstalled) {
             this.setState("loading", false);
             return;
         }
+
+        this.setData({ walletProvider });
 
         // Get a standalone client instance
         this.#standaloneClient = await this.venomConnect.getStandalone();
@@ -122,7 +126,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         if (walletAccount) {
             this.createWalletSubscription?.();
 
-            this.setData({ walletAccount, walletProvider: this.venomConnect.currentProvider });
+            this.setData({ walletAccount });
 
             await this.updateWalletContract();
         }
@@ -135,10 +139,10 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     public callWalletAction () {
-        if (this.state.loading) return;
-
         // If wallet is connected, then disable it ...
         if (this.state.connected) this.disconnectWallet?.();
+
+        if (this.state.loading) return;
 
         // ... and vice versa
         else this.connectWallet?.();
