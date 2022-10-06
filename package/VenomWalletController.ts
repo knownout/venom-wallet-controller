@@ -1,12 +1,10 @@
 import BaseController from "@knownout/base-controller";
-import { waitingVenomPromise } from "./utils/waiting-venom-promise";
 import BigNumber from "bignumber.js";
-import {
-    Address, FullContractState, ProviderRpcClient, Subscription
-} from "everscale-inpage-provider";
+import { Address, FullContractState, ProviderRpcClient, Subscription } from "everscale-inpage-provider";
 import { action, computed, makeObservable, observable } from "mobx";
 import { VenomConnect } from "venom-connect";
 import initVenomConnect from "./utils/init-venom-connect";
+import { waitingVenomPromise } from "./utils/waiting-venom-promise";
 
 export type TVenomWalletAccountData = {
     address: Address;
@@ -103,6 +101,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         // Waiting for connector
         this.venomConnect = await (initFunction ?? initVenomConnect)();
 
+        await new Promise(resolve => setTimeout(resolve, 100));
         const walletProvider = await this.venomConnect.checkAuth();
 
         // Check if browser extension is installed
@@ -131,7 +130,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             await this.updateWalletContract();
         }
 
-        this.setState({ connected: !!walletAccount, loading: false });
+        this.setState({ connected: Boolean(walletAccount), loading: false });
     }
 
     /**
@@ -145,7 +144,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         if (this.state.loading) return;
 
         // ... and vice versa
-        else this.connectWallet?.();
+        if (!this.state.connected) this.connectWallet?.();
     }
 
     /**
@@ -227,6 +226,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     protected async connectWallet () {
+        await globalRpcClient.disconnect();
+
         if (!this.venomConnect) return;
 
         // Kill the current subscription (if it exists).
@@ -248,7 +249,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
                 walletProvider: this.venomConnect?.currentProvider
             });
 
-            this.createWalletSubscription();
+            await this.createWalletSubscription();
             await this.updateWalletContract();
 
             this.setState({ connected: true, loading: false });
