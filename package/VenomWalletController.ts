@@ -237,6 +237,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
         globalRpcClient.disconnect?.();
 
+        if (this.data.walletProvider) this.data.walletProvider.disconnect?.();
+
         if (!this.venomConnect) return;
 
         // Kill the current subscription (if it exists).
