@@ -25,9 +25,7 @@ interface IVenomWalletState {
     /** True only if the wallet is connected. */
     connected: boolean;
 
-    /**
-     * True only on controller initialization or wallet change.
-     */
+    /** True only on controller initialization or wallet change. */
     loading: boolean;
 
     /** Current wallet balance, updated in real time. */
@@ -52,6 +50,9 @@ interface IVenomWalletData {
 
     /** Connected wallet provider instance. */
     walletProvider?: ProviderRpcClient;
+
+    /** True only if wallet network has ID 1000 and is venom mainnet. */
+    walletNetworkValid?: boolean;
 }
 
 /**
@@ -116,12 +117,10 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             return;
         }
 
-        this.setData({ walletProvider });
+        this.setData({ walletProvider, walletNetworkValid: await this.verifyWalletNetwork() });
 
         // Get a standalone client instance
         this.#standaloneClient = await this.venomConnect.getStandalone();
-
-        if (!await this.verifyWalletNetwork()) return this.disconnectWallet();
 
         // Check if wallet is connected
         const walletAccount = await this.checkWalletAuthentication();
@@ -142,14 +141,14 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      * Method for calling the relevant action to connect or disconnect the wallet.
      */
     @action
-    public callWalletAction () {
+    public callWalletAction (forceDisconnect?: true) {
         // If wallet is connected, then disable it ...
-        if (this.state.connected) return this.disconnectWallet();
+        if (this.state.connected || forceDisconnect) return this.disconnectWallet();
 
         if (this.state.loading) return;
 
         // ... and vice versa
-        if (!this.state.connected) this.connectWallet?.();
+        if (!this.state.connected) this.connectWallet();
     }
 
     /**
@@ -255,6 +254,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             this.setState("loading", true);
 
             this.setData({
+                walletNetworkValid: await this.verifyWalletNetwork(),
                 walletAccount: data.permissions.accountInteraction,
                 walletProvider: this.venomConnect?.currentProvider
             });
@@ -262,11 +262,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             await this.createWalletSubscription();
             await this.updateWalletContract();
 
-            if (await this.verifyWalletNetwork()) this.setState({ connected: true, loading: false });
-            else {
-                this.setState("loading", false);
-                this.disconnectWallet();
-            }
+            this.setState({ connected: true, loading: false });
 
             this.#walletPermissionsSubscription?.unsubscribe?.();
             this.#walletPermissionsSubscription = undefined;
