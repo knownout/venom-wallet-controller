@@ -50,9 +50,6 @@ interface IVenomWalletData {
 
     /** Connected wallet provider instance. */
     walletProvider?: ProviderRpcClient;
-
-    /** True only if wallet network has ID 1000 and is venom mainnet. */
-    walletNetworkValid?: boolean;
 }
 
 /**
@@ -117,7 +114,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             return;
         }
 
-        this.setData({ walletProvider, walletNetworkValid: await this.verifyWalletNetwork() });
+        this.setData({ walletProvider });
 
         // Get a standalone client instance
         this.#standaloneClient = await this.venomConnect.getStandalone();
@@ -134,7 +131,9 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             await this.updateWalletContract();
         }
 
-        this.setState({ connected: Boolean(walletAccount) && this.data.walletNetworkValid, loading: false });
+        const networkValid = await this.verifyWalletNetwork();
+
+        this.setState({ connected: Boolean(walletAccount) && networkValid, loading: false });
     }
 
     /**
@@ -263,9 +262,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
                 walletProvider: this.venomConnect?.currentProvider
             });
 
-            this.setData("walletNetworkValid", await this.verifyWalletNetwork());
-
-            this.setState({ connected: this.data.walletNetworkValid, loading: false });
+            this.setState({ connected: Boolean(this.data.walletAccount), loading: false });
 
             this.#walletPermissionsSubscription?.unsubscribe?.();
             this.#walletPermissionsSubscription = undefined;
