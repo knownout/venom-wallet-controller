@@ -121,6 +121,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         // Get a standalone client instance
         this.#standaloneClient = await this.venomConnect.getStandalone();
 
+        if (!await this.verifyWalletNetwork()) return this.disconnectWallet();
+
         // Check if wallet is connected
         const walletAccount = await this.checkWalletAuthentication();
 
@@ -260,16 +262,11 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             await this.createWalletSubscription();
             await this.updateWalletContract();
 
-            const providerState = await this.data.walletProvider?.getProviderState();
-
-            if (
-                !providerState
-                || ("networkId" in providerState && providerState.networkId !== 1000)
-                || ("selectedConnection" in providerState && providerState.selectedConnection !== "venom_mainnet")
-            ) {
+            if (await this.verifyWalletNetwork()) this.setState({ connected: true, loading: false });
+            else {
                 this.setState("loading", false);
                 this.disconnectWallet();
-            } else this.setState({ connected: true, loading: false });
+            }
 
             this.#walletPermissionsSubscription?.unsubscribe?.();
             this.#walletPermissionsSubscription = undefined;
@@ -298,6 +295,26 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
         this.resetState("loading");
         this.resetData("walletInstalled", "walletVersion");
+    }
+
+    /**
+     * Method for checking if a connected wallet network has
+     * networkId 1000 and is venom mainnet.
+     *
+     * @return {Promise<boolean>}
+     * @protected
+     */
+    @observable
+    protected async verifyWalletNetwork () {
+        try {
+            const providerState = await this.data.walletProvider?.getProviderState().catch(() => {
+                throw new Error("Wallet provider state requiring error");
+            });
+
+            return !(!providerState
+                || ("networkId" in providerState && providerState.networkId !== 1000)
+                || ("selectedConnection" in providerState && providerState.selectedConnection !== "venom_mainnet"));
+        } catch { return false; }
     }
 }
 
