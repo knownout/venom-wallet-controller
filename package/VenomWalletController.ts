@@ -260,7 +260,16 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             await this.createWalletSubscription();
             await this.updateWalletContract();
 
-            this.setState({ connected: true, loading: false });
+            const providerState = await this.data.walletProvider?.getProviderState();
+
+            if (
+                !providerState
+                || ("networkId" in providerState && providerState.networkId !== 1000)
+                || ("selectedConnection" in providerState && providerState.selectedConnection !== "venom_mainnet")
+            ) {
+                this.setState("loading", false);
+                this.disconnectWallet();
+            } else this.setState({ connected: true, loading: false });
 
             this.#walletPermissionsSubscription?.unsubscribe?.();
             this.#walletPermissionsSubscription = undefined;
