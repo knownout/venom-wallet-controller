@@ -257,13 +257,13 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
             this.setState("loading", true);
 
-            await this.createWalletSubscription();
-            await this.updateWalletContract();
-
             this.setData({
                 walletAccount: data.permissions.accountInteraction,
                 walletProvider: this.venomConnect?.currentProvider
             });
+
+            await this.createWalletSubscription();
+            await this.updateWalletContract();
 
             this.setState({ connected: Boolean(this.data.walletAccount), loading: false });
 
