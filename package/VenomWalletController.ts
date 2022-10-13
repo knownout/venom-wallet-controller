@@ -142,7 +142,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
     @action
     public callWalletAction () {
         // If wallet is connected, then disable it ...
-        if (this.state.connected) this.disconnectWallet?.();
+        if (this.state.connected) this.disconnectWallet();
 
         if (this.state.loading) return;
 
@@ -279,10 +279,13 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      * @protected
      */
     @action
-    protected async disconnectWallet () {
+    protected disconnectWallet () {
         if (!this.rpcClient || !this.venomConnect) return;
 
-        await this.rpcClient.disconnect();
+        try {
+            globalRpcClient.disconnect?.();
+            this.rpcClient.disconnect?.();
+        } catch { }
 
         this.resetState("loading");
         this.resetData("walletInstalled", "walletVersion");
