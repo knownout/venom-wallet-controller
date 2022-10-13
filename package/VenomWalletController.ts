@@ -246,6 +246,9 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             this.#walletPermissionsSubscription = undefined;
         }
 
+        // Calling the venom-connect modal window.
+        this.setData("walletProvider", await this.venomConnect.connect());
+
         // Create a new subscription to permissions change.
         this.#walletPermissionsSubscription = await this.rpcClient.subscribe("permissionsChanged");
 
@@ -267,9 +270,6 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             this.#walletPermissionsSubscription?.unsubscribe?.();
             this.#walletPermissionsSubscription = undefined;
         });
-
-        // Calling the venom-connect modal window.
-        await this.venomConnect.connect();
     }
 
     /**
