@@ -32,6 +32,9 @@ interface IVenomWalletState {
 
     /** Current wallet balance, updated in real time. */
     balance?: BigNumber;
+
+    /** True only if wallet contract exist (deployed). */
+    walletDeployed?: boolean;
 }
 
 interface IVenomWalletData {
@@ -195,6 +198,9 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
         // Update balance and save updated contract state.
         if (state?.balance) this.setState("balance", new BigNumber(state.balance).shiftedBy(-9));
+
+        if (state === undefined) this.setState("walletDeployed", false);
+
         this.setData("walletContract", state);
     }
 
@@ -226,7 +232,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     protected async connectWallet () {
-        if (!('on' in (this.venomConnect ?? {}))) this.venomConnect = await initVenomConnect();
+        if (!("on" in (this.venomConnect ?? {}))) this.venomConnect = await initVenomConnect();
 
         globalRpcClient.disconnect?.();
 
