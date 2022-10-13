@@ -226,7 +226,9 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     protected async connectWallet () {
-        await globalRpcClient.disconnect();
+        if (!('on' in (this.venomConnect ?? {}))) this.venomConnect = await initVenomConnect();
+
+        globalRpcClient.disconnect?.();
 
         if (!this.venomConnect) return;
 

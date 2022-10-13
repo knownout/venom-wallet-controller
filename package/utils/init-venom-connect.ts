@@ -78,8 +78,7 @@ const initVenomConnect = async () => new VenomConnect({
                     id: "extension",
                     type: "extension"
                 }
-            ],
-            defaultWalletWaysToConnect: [ "mobile", "ios", "android" ]
+            ]
         }
     }
 });
