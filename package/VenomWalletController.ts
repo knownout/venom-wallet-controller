@@ -213,7 +213,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      * @protected
      */
     protected async checkWalletAuthentication () {
-        if (!this.venomConnect || !this.standaloneClient) return false;
+        if (!this.venomConnect) return false;
 
         let providerState = await this.rpcClient.getProviderState();
         if (!providerState || !providerState.permissions.accountInteraction) {
@@ -241,7 +241,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         if (!("on" in (this.venomConnect ?? {}))) this.venomConnect = await initVenomConnect();
 
         this.resetState("loading");
-        this.resetData("walletInstalled", "walletVersion");
+        this.resetData("walletInstalled", "walletVersion", "walletProvider");
 
         globalRpcClient.disconnect?.();
 
@@ -322,8 +322,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             });
 
             return !(!providerState
-                || ("networkId" in providerState && providerState.networkId !== 1000)
-                || ("selectedConnection" in providerState && providerState.selectedConnection !== "venom_mainnet"));
+                || ("networkId" in providerState && providerState.networkId !== 1000));
         } catch { return false; }
     }
 }
