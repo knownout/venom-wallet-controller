@@ -240,6 +240,9 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
     protected async connectWallet () {
         if (!("on" in (this.venomConnect ?? {}))) this.venomConnect = await initVenomConnect();
 
+        this.resetState("loading");
+        this.resetData("walletInstalled", "walletVersion");
+
         globalRpcClient.disconnect?.();
 
         if (this.data.walletProvider) this.data.walletProvider.disconnect?.();
