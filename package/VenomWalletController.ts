@@ -52,6 +52,10 @@ interface IVenomWalletData {
     walletProvider?: ProviderRpcClient;
 }
 
+export type TVenomWalletEvents = "walletConnected"
+    | "walletDisconnected"
+    | "contractStateChanged"
+
 /**
  * Venom wallet controller based on venom-connect.
  */
@@ -65,11 +69,18 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
     #walletPermissionsSubscription?: Subscription<"permissionsChanged">;
 
+    #eventListeners: Partial<{ [key in TVenomWalletEvents]: Function[] }> = {};
+
     constructor () {
         super({ connected: false, loading: true }, {});
         makeObservable(this);
 
         this.updateWalletContract = this.updateWalletContract.bind(this);
+        this.disconnectWallet = this.disconnectWallet.bind(this);
+        this.addEventListener = this.addEventListener.bind(this);
+        this.callEvent = this.callEvent.bind(this);
+        this.removeEventListeners = this.removeEventListeners.bind(this);
+        this.removeEventListener = this.removeEventListener.bind(this);
     }
 
     /**
@@ -134,6 +145,10 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         }
 
         this.setState({ connected: Boolean(walletAccount) && networkValid, loading: false });
+
+        if (this.state.connected && walletAccount) {
+            this.callEvent("walletConnected", walletAccount.address.toString());
+        }
     }
 
     /**
@@ -204,6 +219,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         if (state === undefined) this.setState("walletDeployed", false);
 
         this.setData("walletContract", state);
+        this.callEvent("contractStateChanged", state);
     }
 
     /**
@@ -281,6 +297,10 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
             this.setState({ connected: Boolean(this.data.walletAccount), loading: false });
 
+            if (this.state.connected) {
+                this.callEvent("walletConnected", this.data.walletAccount?.address.toString());
+            }
+
             this.#walletPermissionsSubscription?.unsubscribe?.();
             this.#walletPermissionsSubscription = undefined;
         });
@@ -305,6 +325,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
         this.resetState("loading");
         this.resetData("walletInstalled", "walletVersion");
+
+        this.callEvent("walletDisconnected");
     }
 
     /**
@@ -324,6 +346,80 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             return !(!providerState
                 || ("networkId" in providerState && providerState.networkId !== 1000));
         } catch { return false; }
+    }
+
+    /**
+     * Method for adding a listener to the wallet connect event.
+     *
+     * @param {TVenomWalletEvents} event name of the desired event.
+     * @param {Function} listener callback function.
+     */
+    public addEventListener (event: "walletConnected", listener: (address: string) => void): void;
+
+    /**
+     * Method for adding a listener to the wallet disconnect event.
+     *
+     * @param {TVenomWalletEvents} event name of the desired event.
+     * @param {Function} listener callback function.
+     */
+    public addEventListener (event: "walletDisconnected", listener: () => void): void;
+
+    /**
+     * Method for adding a listener to the wallet contract state changed event.
+     *
+     * @param {TVenomWalletEvents} event name of the desired event.
+     * @param {Function} listener callback function.
+     */
+    public addEventListener (event: "contractStateChanged", listener: (state?: FullContractState) => void): void;
+
+    /**
+     * Method for adding a listener to a specific event.
+     *
+     * @param {TVenomWalletEvents} event name of the desired event.
+     * @param {Function} listener callback function.
+     */
+    @observable
+    public addEventListener (event: TVenomWalletEvents, listener: Function) {
+        if (!this.#eventListeners[event]) this.#eventListeners[event] = [];
+
+        if (this.#eventListeners[event]?.find(fn => String(fn) === String(event))) return;
+
+        this.#eventListeners[event]?.push(listener);
+    }
+
+    /**
+     * Method for removing a specific listener for an event.
+     *
+     * @param {TVenomWalletEvents} event name of the desired event.
+     * @param {Function} listener callback function.
+     */
+    @observable
+    public removeEventListener (event: TVenomWalletEvents, listener: Function) {
+        if (!this.#eventListeners[event]) return;
+
+        this.#eventListeners[event] = this.#eventListeners[event]?.filter(fn => String(fn) !== String(listener));
+    }
+
+    /**
+     * Method for removing all listeners from a specific event, or all listeners if the event name is
+     * not set.
+     * @param {TVenomWalletEvents} event name of the desired event.
+     */
+    @observable
+    public removeEventListeners (event?: TVenomWalletEvents) {
+        if (!event) this.#eventListeners = {};
+        else this.#eventListeners[event] = [];
+    }
+
+    /**
+     * Method to trigger a specific event within a controller.
+     *
+     * @param {TVenomWalletEvents} event name of the desired event.
+     * @param {any} args arguments for the event callback function.
+     * @private
+     */
+    private callEvent (event: TVenomWalletEvents, ...args: any) {
+        if (this.#eventListeners[event]) this.#eventListeners[event]?.forEach(eventCallback => eventCallback(...args));
     }
 }
 
