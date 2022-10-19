@@ -382,6 +382,10 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
     public addEventListener (event: TVenomWalletEvents, listener: Function) {
         if (!this.#eventListeners[event]) this.#eventListeners[event] = [];
 
+        if (event === "walletConnected" && this.state.connected) {
+            this.callEvent("walletConnected", this.data.walletAccount?.address.toString())
+        }
+
         if (this.#eventListeners[event]?.find(fn => String(fn) === String(event))) return;
 
         this.#eventListeners[event]?.push(listener);
