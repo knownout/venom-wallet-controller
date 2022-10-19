@@ -55,6 +55,7 @@ interface IVenomWalletData {
 export type TVenomWalletEvents = "walletConnected"
     | "walletDisconnected"
     | "contractStateChanged"
+    | "controllerInitialized"
 
 /**
  * Venom wallet controller based on venom-connect.
@@ -120,8 +121,11 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         const walletInstalled = Boolean(walletProvider);
 
         this.setData({ walletInstalled });
+
         if (!walletInstalled) {
             this.setState("loading", false);
+
+            this.callEvent("controllerInitialized");
             return;
         }
 
@@ -149,6 +153,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         if (this.state.connected && walletAccount) {
             this.callEvent("walletConnected", walletAccount.address.toString());
         }
+
+        this.callEvent("controllerInitialized");
     }
 
     /**
@@ -382,9 +388,11 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
     public addEventListener (event: TVenomWalletEvents, listener: Function) {
         if (!this.#eventListeners[event]) this.#eventListeners[event] = [];
 
-        if (event === "walletConnected" && this.state.connected) {
-            this.callEvent("walletConnected", this.data.walletAccount?.address.toString())
-        }
+        if (event === "walletConnected" && this.state.connected)
+            this.callEvent("walletConnected", this.data.walletAccount?.address.toString());
+
+        if (event === "controllerInitialized" && this.state.loading === false)
+            this.callEvent("controllerInitialized");
 
         if (this.#eventListeners[event]?.find(fn => String(fn) === String(event))) return;
 
