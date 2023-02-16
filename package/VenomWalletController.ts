@@ -115,6 +115,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
     public async initController (initFunction?: (networkID?: number) => Promise<VenomConnect>) {
         this.setState("loading", true);
 
+        if (initFunction) this.#initFunction = initFunction
+
         // Waiting for connector
         this.venomConnect = await this.#initFunction(this.networkID);
 
