@@ -179,6 +179,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
     @action
     public changeDefaultNetworkID (networkID: number) {
         this.networkID = networkID
+
+        return this
     }
 
     @action
@@ -197,6 +199,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         this.setData({ walletAccount: data.permissions.accountInteraction })
 
         await this.updateWalletContract()
+
+        return this
     }
 
     /**
