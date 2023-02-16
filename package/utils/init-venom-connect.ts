@@ -2,8 +2,9 @@ import { ProviderRpcClient } from "everscale-inpage-provider";
 import { EverscaleStandaloneClient } from "everscale-standalone-client";
 import { VenomConnect } from "venom-connect";
 
-const initVenomConnect = async () => new VenomConnect({
+const initVenomConnect = async (networkID = 1000) => new VenomConnect({
     theme: "dark",
+    checkNetworkId: networkID,
     providersOptions: {
         venomwallet: {
             links: {

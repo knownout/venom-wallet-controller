@@ -114,7 +114,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         this.setState("loading", true);
 
         // Waiting for connector
-        this.venomConnect = await (initFunction ?? initVenomConnect)();
+        this.venomConnect = await (initFunction ?? initVenomConnect)(this.networkID);
 
         await new Promise(resolve => setTimeout(resolve, 100));
         const walletProvider = await this.venomConnect.checkAuth();
@@ -288,7 +288,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     protected async connectWallet () {
-        if (!("on" in (this.venomConnect ?? {}))) this.venomConnect = await initVenomConnect();
+        if (!("on" in (this.venomConnect ?? {}))) this.venomConnect = await initVenomConnect(this.networkID);
 
         this.resetState("loading");
         this.resetData("walletInstalled", "walletVersion", "walletProvider");
@@ -309,7 +309,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
         try {
             this.setData("walletProvider", await this.venomConnect.connect());
         } catch {
-            this.venomConnect = await initVenomConnect();
+            this.venomConnect = await initVenomConnect(this.networkID);
             this.setData("walletProvider", await this.venomConnect.connect());
         }
 
