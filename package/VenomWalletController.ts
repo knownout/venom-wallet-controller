@@ -64,6 +64,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
     @observable private venomConnect?: VenomConnect;
 
+    @observable private networkID = 1000
+
     #standaloneClient: ProviderRpcClient | null = null;
 
     #walletContractSubscription?: Subscription<"contractStateChanged">;
@@ -169,6 +171,32 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
 
         // ... and vice versa
         if (!this.state.connected) this.connectWallet();
+    }
+
+    /**
+     * Method for changing default network ID for verification
+     */
+    @action
+    public changeDefaultNetworkID (networkID: number) {
+        this.networkID = networkID
+    }
+
+    @action
+    public async changeWalletAccount () {
+        await this.rpcClient.changeAccount()
+
+        const data = await this.rpcClient.getProviderState()
+
+        if (!data.permissions.accountInteraction) {
+            this.disconnectWallet()
+
+            this.callEvent("walletDisconnected")
+            return
+        }
+
+        this.setData({ walletAccount: data.permissions.accountInteraction })
+
+        await this.updateWalletContract()
     }
 
     /**
@@ -350,7 +378,7 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
             });
 
             return !(!providerState
-                || ("networkId" in providerState && providerState.networkId !== 1000));
+                || ("networkId" in providerState && providerState.networkId !== this.networkID));
         } catch { return false; }
     }
 
