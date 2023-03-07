@@ -15,6 +15,8 @@ jobs:
           path: ./dist
           key: 'dist'
       - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: '7.29.0'
       - uses: actions/setup-node@v3
         with:
           node-version: 16
@@ -36,8 +38,6 @@ jobs:
           node-version: 16
           cache: 'pnpm'
           registry-url: https://registry.npmjs.org/
-      - run: pnpm install
-      - run: pnpm build:package
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
