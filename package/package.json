@@ -1,6 +1,6 @@
 {
     "name": "@knownout/venom-wallet-controller",
-    "version": "0.1.43",
+    "version": "0.1.44",
     "author": "Alexandr Slavinskii",
     "license": "MIT",
     "description": "Venom wallet controller",

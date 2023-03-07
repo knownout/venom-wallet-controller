@@ -1,25 +1,17 @@
-import BaseController from "@knownout/base-controller";
-import BigNumber from "bignumber.js";
-import { Address, FullContractState, ProviderRpcClient, Subscription } from "everscale-inpage-provider";
-import { action, computed, makeObservable, observable } from "mobx";
-import { VenomConnect } from "venom-connect";
-import initVenomConnect from "./utils/init-venom-connect";
-import { waitingVenomPromise } from "./utils/waiting-venom-promise";
+import BaseController from "@knownout/base-controller"
+import BigNumber from "bignumber.js"
+import { Address, FullContractState, ProviderRpcClient, Subscription } from "everscale-inpage-provider"
+import { EverscaleStandaloneClient } from "everscale-standalone-client"
+import { action, computed, makeObservable, observable } from "mobx"
+import { VenomConnect } from "venom-connect"
+import initVenomConnect from "./utils/init-venom-connect"
+import { waitingVenomPromise } from "./utils/waiting-venom-promise"
 
 export type TVenomWalletAccountData = {
     address: Address;
     contractType: string;
     publicKey: string;
 }
-
-/**
- * Provider instance, should not be overwritten.
- * @type {ProviderRpcClient}
- */
-let globalRpcClient = new ProviderRpcClient({
-    forceUseFallback: true,
-    fallback: () => waitingVenomPromise()
-});
 
 interface IVenomWalletState {
     /** True only if the wallet is connected. */
@@ -62,37 +54,64 @@ export type TVenomWalletEvents = "walletConnected"
  */
 class VenomWalletController extends BaseController<IVenomWalletState, IVenomWalletData> {
 
-    @observable private venomConnect?: VenomConnect;
+    @observable private venomConnect?: VenomConnect
 
     @observable private networkID = 1000
 
-    #standaloneClient: ProviderRpcClient | null = null;
+    #standaloneClient: ProviderRpcClient | null = null
 
-    #walletContractSubscription?: Subscription<"contractStateChanged">;
+    #walletContractSubscription?: Subscription<"contractStateChanged">
 
-    #walletPermissionsSubscription?: Subscription<"permissionsChanged">;
+    #walletPermissionsSubscription?: Subscription<"permissionsChanged">
 
-    #eventListeners: Partial<{ [key in TVenomWalletEvents]: Function[] }> = {};
+    #eventListeners: Partial<{ [key in TVenomWalletEvents]: Function[] }> = {}
 
     #initFunction: (networkID?: number) => Promise<VenomConnect> = initVenomConnect
 
-    constructor () {
-        super({ connected: false, loading: true }, {});
-        makeObservable(this);
+    /**
+     * Provider instance, should not be overwritten.
+     * @type {ProviderRpcClient}
+     */
+    readonly #globalStandaloneClient = new ProviderRpcClient({
+        fallback: () => EverscaleStandaloneClient.create({
+            connection: {
+                id: this.networkID,
+                group: "mainnet",
+                type: "jrpc",
+                data: {
+                    endpoint: "https://jrpc-testnet.venom.foundation/rpc"
+                }
+            }
+        }),
+        forceUseFallback: true
+    })
 
-        this.updateWalletContract = this.updateWalletContract.bind(this);
-        this.disconnectWallet = this.disconnectWallet.bind(this);
-        this.addEventListener = this.addEventListener.bind(this);
-        this.callEvent = this.callEvent.bind(this);
-        this.removeEventListeners = this.removeEventListeners.bind(this);
-        this.removeEventListener = this.removeEventListener.bind(this);
+    /**
+     * Provider instance, should not be overwritten.
+     * @type {ProviderRpcClient}
+     */
+    readonly #globalRpcClient = new ProviderRpcClient({
+        forceUseFallback: true,
+        fallback: () => waitingVenomPromise()
+    })
+
+    constructor () {
+        super({ connected: false, loading: true }, {})
+        makeObservable(this)
+
+        this.updateWalletContract = this.updateWalletContract.bind(this)
+        this.disconnectWallet = this.disconnectWallet.bind(this)
+        this.addEventListener = this.addEventListener.bind(this)
+        this.callEvent = this.callEvent.bind(this)
+        this.removeEventListeners = this.removeEventListeners.bind(this)
+        this.removeEventListener = this.removeEventListener.bind(this)
     }
 
     /**
      * Method for getting inpage provider.
      * @return {ProviderRpcClient | null} inpage provider instance or null if not initialized.
      */
-    public get rpcClient () { return this.data.walletProvider ?? globalRpcClient; }
+    public get rpcClient () { return this.data.walletProvider ?? this.#globalRpcClient }
 
     /**
      * Method for getting standalone client
@@ -100,9 +119,9 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @computed
     public get standaloneClient () {
-        if (!this.venomConnect) return null;
+        if (!this.venomConnect) return this.#globalStandaloneClient
 
-        return this.#standaloneClient;
+        return this.#standaloneClient ?? this.#globalStandaloneClient
     }
 
     /**
@@ -113,54 +132,54 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     public async initController (initFunction?: (networkID?: number) => Promise<VenomConnect>) {
-        this.setState("loading", true);
+        this.setState("loading", true)
 
         if (initFunction) this.#initFunction = initFunction
 
         // Waiting for connector
-        this.venomConnect = await this.#initFunction(this.networkID);
+        this.venomConnect = await this.#initFunction(this.networkID)
 
-        await new Promise(resolve => setTimeout(resolve, 100));
-        const walletProvider = await this.venomConnect.checkAuth();
+        await new Promise(resolve => setTimeout(resolve, 100))
+        const walletProvider = await this.venomConnect.checkAuth()
 
         // Check if browser extension is installed
-        const walletInstalled = Boolean(walletProvider);
+        const walletInstalled = Boolean(walletProvider)
 
-        this.setData({ walletInstalled });
+        this.setData({ walletInstalled })
 
         if (!walletInstalled) {
-            this.setState("loading", false);
+            this.setState("loading", false)
 
-            this.callEvent("controllerInitialized");
-            return;
+            this.callEvent("controllerInitialized")
+            return
         }
 
-        this.setData({ walletProvider });
+        this.setData({ walletProvider })
 
         // Get a standalone client instance
-        this.#standaloneClient = await this.venomConnect.getStandalone();
+        this.#standaloneClient = await this.venomConnect.getStandalone()
 
         // Check if wallet is connected
-        const walletAccount = await this.checkWalletAuthentication();
+        const walletAccount = await this.checkWalletAuthentication()
 
-        const networkValid = await this.verifyWalletNetwork();
+        const networkValid = await this.verifyWalletNetwork()
 
         // If connected, then update states
         if (walletAccount) {
-            this.setData({ walletAccount });
+            this.setData({ walletAccount })
 
-            await this.createWalletSubscription();
+            await this.createWalletSubscription()
 
-            await this.updateWalletContract();
+            await this.updateWalletContract()
         }
 
-        this.setState({ connected: Boolean(walletAccount) && networkValid, loading: false });
+        this.setState({ connected: Boolean(walletAccount) && networkValid, loading: false })
 
         if (this.state.connected && walletAccount) {
-            this.callEvent("walletConnected", walletAccount.address.toString());
+            this.callEvent("walletConnected", walletAccount.address.toString())
         }
 
-        this.callEvent("controllerInitialized");
+        this.callEvent("controllerInitialized")
     }
 
     /**
@@ -169,12 +188,12 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
     @action
     public callWalletAction (forceDisconnect?: true) {
         // If wallet is connected, then disable it ...
-        if (this.state.connected || forceDisconnect) return this.disconnectWallet();
+        if (this.state.connected || forceDisconnect) return this.disconnectWallet()
 
-        if (this.state.loading) return;
+        if (this.state.loading) return
 
         // ... and vice versa
-        if (!this.state.connected) this.connectWallet();
+        if (!this.state.connected) this.connectWallet()
     }
 
     /**
@@ -220,22 +239,22 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     protected async createWalletSubscription () {
-        if (!this.data.walletAccount || !this.standaloneClient) return;
+        if (!this.data.walletAccount || !this.standaloneClient) return
 
         // Kill current subscription if exists
         if (this.#walletContractSubscription !== undefined) {
-            await this.#walletContractSubscription.unsubscribe?.();
-            this.#walletContractSubscription = undefined;
+            await this.#walletContractSubscription.unsubscribe?.()
+            this.#walletContractSubscription = undefined
         }
 
-        await new Promise(r => setTimeout(r, 100));
+        await new Promise(r => setTimeout(r, 100))
 
         this.#walletContractSubscription = await this.standaloneClient
             .subscribe("contractStateChanged", {
                 address: this.data.walletAccount.address
-            });
+            })
 
-        this.#walletContractSubscription?.on("data", this.updateWalletContract);
+        this.#walletContractSubscription?.on("data", this.updateWalletContract)
     }
 
     /**
@@ -248,20 +267,21 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     protected async updateWalletContract () {
-        if (!this.data.walletAccount || !this.standaloneClient) return;
+        if (!this.data.walletAccount || !this.standaloneClient) return
 
         // Getting full state of the user wallet contract.
         const { state } = await this.standaloneClient.getFullContractState({
             address: this.data.walletAccount.address
-        });
+        })
 
         // Update balance and save updated contract state.
-        if (state?.balance) this.setState("balance", new BigNumber(state.balance).shiftedBy(-9));
+        if (state?.balance) this.setState("balance", new BigNumber(state.balance).shiftedBy(-9))
+        else this.setState("balance", new BigNumber(0))
 
-        if (state === undefined) this.setState("walletDeployed", false);
+        this.setState("walletDeployed", state !== undefined)
 
-        this.setData("walletContract", state);
-        this.callEvent("contractStateChanged", state);
+        this.setData("walletContract", state)
+        this.callEvent("contractStateChanged", state)
     }
 
     /**
@@ -271,16 +291,16 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      * @protected
      */
     protected async checkWalletAuthentication () {
-        if (!this.venomConnect) return false;
+        if (!this.venomConnect) return false
 
-        let providerState = await this.rpcClient.getProviderState();
+        let providerState = await this.rpcClient.getProviderState()
         if (!providerState || !providerState.permissions.accountInteraction) {
-            providerState = await globalRpcClient.getProviderState();
+            providerState = await this.#globalRpcClient.getProviderState()
 
-            if (!providerState || !providerState.permissions.accountInteraction) return false;
+            if (!providerState || !providerState.permissions.accountInteraction) return false
         }
 
-        return providerState.permissions.accountInteraction as TVenomWalletAccountData;
+        return providerState.permissions.accountInteraction as TVenomWalletAccountData
     }
 
     /**
@@ -296,56 +316,56 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     protected async connectWallet () {
-        if (!("on" in (this.venomConnect ?? {}))) this.venomConnect = await this.#initFunction(this.networkID);
+        if (!("on" in (this.venomConnect ?? {}))) this.venomConnect = await this.#initFunction(this.networkID)
 
-        this.resetState("loading");
-        this.resetData("walletInstalled", "walletVersion", "walletProvider");
+        this.resetState("loading")
+        this.resetData("walletInstalled", "walletVersion", "walletProvider")
 
-        globalRpcClient.disconnect?.();
+        this.#globalRpcClient.disconnect?.()
 
-        if (this.data.walletProvider) this.data.walletProvider.disconnect?.();
+        if (this.data.walletProvider) this.data.walletProvider.disconnect?.()
 
-        if (!this.venomConnect) return;
+        if (!this.venomConnect) return
 
         // Kill the current subscription (if it exists).
         if (this.#walletPermissionsSubscription) {
-            await this.#walletPermissionsSubscription.unsubscribe();
-            this.#walletPermissionsSubscription = undefined;
+            await this.#walletPermissionsSubscription.unsubscribe()
+            this.#walletPermissionsSubscription = undefined
         }
 
         // Calling the venom-connect modal window.
         try {
-            this.setData("walletProvider", await this.venomConnect.connect());
+            this.setData("walletProvider", await this.venomConnect.connect())
         } catch {
-            this.venomConnect = await this.#initFunction(this.networkID);
-            this.setData("walletProvider", await this.venomConnect.connect());
+            this.venomConnect = await this.#initFunction(this.networkID)
+            this.setData("walletProvider", await this.venomConnect.connect())
         }
 
         // Create a new subscription to permissions change.
-        this.#walletPermissionsSubscription = await this.rpcClient.subscribe("permissionsChanged");
+        this.#walletPermissionsSubscription = await this.rpcClient.subscribe("permissionsChanged")
 
         this.#walletPermissionsSubscription.on("data", async data => {
-            if (!data.permissions.accountInteraction) return;
+            if (!data.permissions.accountInteraction) return
 
-            this.setState("loading", true);
+            this.setState("loading", true)
 
             this.setData({
                 walletAccount: data.permissions.accountInteraction,
                 walletProvider: this.venomConnect?.currentProvider
-            });
+            })
 
-            await this.createWalletSubscription();
-            await this.updateWalletContract();
+            await this.createWalletSubscription()
+            await this.updateWalletContract()
 
-            this.setState({ connected: Boolean(this.data.walletAccount), loading: false });
+            this.setState({ connected: Boolean(this.data.walletAccount), loading: false })
 
             if (this.state.connected) {
-                this.callEvent("walletConnected", this.data.walletAccount?.address.toString());
+                this.callEvent("walletConnected", this.data.walletAccount?.address.toString())
             }
 
-            this.#walletPermissionsSubscription?.unsubscribe?.();
-            this.#walletPermissionsSubscription = undefined;
-        });
+            this.#walletPermissionsSubscription?.unsubscribe?.()
+            this.#walletPermissionsSubscription = undefined
+        })
     }
 
     /**
@@ -358,17 +378,17 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @action
     protected disconnectWallet () {
-        if (!this.rpcClient || !this.venomConnect) return;
+        if (!this.rpcClient || !this.venomConnect) return
 
         try {
-            globalRpcClient.disconnect?.();
-            this.rpcClient.disconnect?.();
+            this.#globalRpcClient.disconnect?.()
+            this.rpcClient.disconnect?.()
         } catch { }
 
-        this.resetState("loading");
-        this.resetData("walletInstalled", "walletVersion");
+        this.resetState("loading")
+        this.resetData("walletInstalled", "walletVersion")
 
-        this.callEvent("walletDisconnected");
+        this.callEvent("walletDisconnected")
     }
 
     /**
@@ -382,12 +402,12 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
     protected async verifyWalletNetwork () {
         try {
             const providerState = await this.data.walletProvider?.getProviderState().catch(() => {
-                throw new Error("Wallet provider state requiring error");
-            });
+                throw new Error("Wallet provider state requiring error")
+            })
 
             return !(!providerState
-                || ("networkId" in providerState && providerState.networkId !== this.networkID));
-        } catch { return false; }
+                || ("networkId" in providerState && providerState.networkId !== this.networkID))
+        } catch { return false }
     }
 
     /**
@@ -422,17 +442,17 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @observable
     public addEventListener (event: TVenomWalletEvents, listener: Function) {
-        if (!this.#eventListeners[event]) this.#eventListeners[event] = [];
+        if (!this.#eventListeners[event]) this.#eventListeners[event] = []
 
         if (event === "walletConnected" && this.state.connected)
-            this.callEvent("walletConnected", this.data.walletAccount?.address.toString());
+            this.callEvent("walletConnected", this.data.walletAccount?.address.toString())
 
         if (event === "controllerInitialized" && this.state.loading === false)
-            this.callEvent("controllerInitialized");
+            this.callEvent("controllerInitialized")
 
-        if (this.#eventListeners[event]?.find(fn => String(fn) === String(event))) return;
+        if (this.#eventListeners[event]?.find(fn => String(fn) === String(event))) return
 
-        this.#eventListeners[event]?.push(listener);
+        this.#eventListeners[event]?.push(listener)
     }
 
     /**
@@ -443,9 +463,9 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @observable
     public removeEventListener (event: TVenomWalletEvents, listener: Function) {
-        if (!this.#eventListeners[event]) return;
+        if (!this.#eventListeners[event]) return
 
-        this.#eventListeners[event] = this.#eventListeners[event]?.filter(fn => String(fn) !== String(listener));
+        this.#eventListeners[event] = this.#eventListeners[event]?.filter(fn => String(fn) !== String(listener))
     }
 
     /**
@@ -455,8 +475,8 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      */
     @observable
     public removeEventListeners (event?: TVenomWalletEvents) {
-        if (!event) this.#eventListeners = {};
-        else this.#eventListeners[event] = [];
+        if (!event) this.#eventListeners = {}
+        else this.#eventListeners[event] = []
     }
 
     /**
@@ -467,9 +487,9 @@ class VenomWalletController extends BaseController<IVenomWalletState, IVenomWall
      * @private
      */
     private callEvent (event: TVenomWalletEvents, ...args: any) {
-        if (this.#eventListeners[event]) this.#eventListeners[event]?.forEach(eventCallback => eventCallback(...args));
+        if (this.#eventListeners[event]) this.#eventListeners[event]?.forEach(eventCallback => eventCallback(...args))
     }
 }
 
-const venomWallet = new VenomWalletController();
-export default venomWallet;
+const venomWallet = new VenomWalletController()
+export default venomWallet

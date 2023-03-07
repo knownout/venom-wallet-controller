@@ -1,6 +1,6 @@
-import { ProviderRpcClient } from "everscale-inpage-provider";
-import { EverscaleStandaloneClient } from "everscale-standalone-client";
-import { VenomConnect } from "venom-connect";
+import { ProviderRpcClient } from "everscale-inpage-provider"
+import { EverscaleStandaloneClient } from "everscale-standalone-client"
+import { VenomConnect } from "venom-connect"
 
 const initVenomConnect = async (networkID = 1000) => new VenomConnect({
     theme: "dark",
@@ -82,6 +82,6 @@ const initVenomConnect = async (networkID = 1000) => new VenomConnect({
             ]
         }
     }
-});
+})
 
-export default initVenomConnect;
+export default initVenomConnect
