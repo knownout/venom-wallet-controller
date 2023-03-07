@@ -41,7 +41,6 @@ jobs:
           node-version: 16
           cache: 'pnpm'
           registry-url: https://registry.npmjs.org/
-      - run: cd ./package
-      - run: npm publish
+      - run: cd ./package; npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
