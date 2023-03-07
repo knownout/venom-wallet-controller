@@ -1,9 +1,5 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-pnpm run build:package
-cd package || exit
 npm version patch --no-git-tag-version
-npm publish
-cd ../
 git add .
