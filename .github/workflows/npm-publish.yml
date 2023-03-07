@@ -33,6 +33,9 @@ jobs:
         with:
           path: ./dist
           key: 'dist'
+      - uses: pnpm/action-setup@v2.2.4
+        with:
+          version: '7.29.0'
       - uses: actions/setup-node@v3
         with:
           node-version: 16
