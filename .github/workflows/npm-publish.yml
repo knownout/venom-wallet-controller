@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path: ./dist
+          path: ./package/dist
           key: 'dist'
       - uses: pnpm/action-setup@v2.2.4
         with:
@@ -31,7 +31,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/cache@v3
         with:
-          path: ./dist
+          path: ./package/dist
           key: 'dist'
       - uses: pnpm/action-setup@v2.2.4
         with:
@@ -41,6 +41,7 @@ jobs:
           node-version: 16
           cache: 'pnpm'
           registry-url: https://registry.npmjs.org/
+      - run: cd ./package
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
