@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
+cd package || exit
 npm version patch --no-git-tag-version
 git add .

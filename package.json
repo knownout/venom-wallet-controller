@@ -1,6 +1,6 @@
 {
     "name": "@knownout/venom-wallet-controller",
-    "version": "0.0.1",
+    "version": "0.0.0",
     "author": "Alexandr <re-knownout> knownout@hotmail.com",
     "license": "MIT",
     "description": "Venom wallet controller",
